@@ -1,27 +1,30 @@
 import numpy as np
 import faiss
 
-# Replace the file reading with direct data
-DATA = np.array([
-    [0.1, 0.2, 0.3, 0.4],
-    [0.5, 0.6, 0.7, 0.8],
-    [0.9, 1.0, 1.1, 1.2]
-], dtype='float32')  # A 3 x 4 matrix
+# Define the data matrix (D x N)
+matrix_x = np.array([[1, 2, 3, 4, 5],
+                     [6, 7, 8, 9, 10],
+                     [11, 12, 13, 14, 15]])
 
-QUERY = np.array([
-    [0.2, 0.3, 0.4, 0.5],
-    [0.6, 0.7, 0.8, 0.9]
-], dtype='float32')  # A 2 x 4 matrix
+matrix_x = np.array([[1, 4, 3, 5, 2],
+                     [6, 9, 8, 10, 7],
+                     [11, 14, 13, 15, 12]])
 
-(n, d) = DATA.shape
+# Define the query matrix (D x Q)
+matrix_q = np.array([[1, 2],
+                     [3, 4],
+                     [5, 6]])
 
-dim, param = 4, 'Flat'
+# Transpose the data matrix to N x D and Q x D because FAISS expects this shape
+matrix_x_t = np.ascontiguousarray(matrix_x.T)
+matrix_q_t = np.ascontiguousarray(matrix_q.T)
+
+dim, param = matrix_x_t.shape[1], 'Flat'
 measure = faiss.METRIC_INNER_PRODUCT  # inner product
 # measure = faiss.METRIC_L2  # Euclidean distance
 index = faiss.index_factory(dim, param, measure)
-index.add(DATA)
-k = 1
-D, I = index.search(QUERY, k)     # search
+index.add(matrix_x_t)
+k = 2
+D, I = index.search(matrix_q_t, k)  # search
 
-for i, query in enumerate(QUERY):
-    print(f"For query {query}, the nearest vector in the dataset is {DATA[I[i, 0]]}")
+print(I.T)

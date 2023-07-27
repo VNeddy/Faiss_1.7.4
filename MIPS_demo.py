@@ -1,31 +1,37 @@
 import numpy as np
 
-DATA = np.array([
-    [0.1, 0.2, 0.3, 0.4],
-    [0.5, 0.6, 0.7, 0.8],
-    [0.9, 1.0, 1.1, 1.2]
-])
+# Define the data matrix (D x N)
+matrix_x = np.array([[1, 4, 3, 5, 2],
+                     [6, 9, 8, 10, 7],
+                     [11, 14, 13, 15, 12]])
 
-QUERY = np.array([
-    [0.2, 0.3, 0.4, 0.5],
-    [0.6, 0.7, 0.8, 0.9]
-])
+# Define the query matrix (D x Q)
+matrix_q = np.array([[1, 2],
+                     [3, 4],
+                     [5, 6]])
 
-n, d = DATA.shape
-Q, _ = QUERY.shape
+d, n = matrix_x.shape
+_, Q = matrix_q.shape
 
+matrix_x_t = np.ascontiguousarray(matrix_x.T)
+matrix_q_t = np.ascontiguousarray(matrix_q.T)
+np.random.seed(123)
 RANDOM = np.random.normal(0, 1, (d, 1000))  # Generate N(0, 1)
-L = np.matmul(DATA, RANDOM)  # Compute the inner products
-
+L = np.matmul(matrix_x_t, RANDOM)  # Compute the inner products
 # Step 4: Find the closest r_i for each query in QUERY
-closest_indices = np.argmax(np.matmul(QUERY, RANDOM), axis=1)  # Find the indices of the closest r_i for each query
+closest_indices = np.argmax(np.matmul(matrix_q_t, RANDOM), axis=1)
 
 # Step 5: Find the top MIPS based on the inner products order of r1
-top1_MIPS = []
+k = 2
+topk_MIPS = []
 for i in range(Q):
     closest_index = closest_indices[i]  # Index of the closest r_i for the current query
-    top1_index = np.argmax(L[:, closest_index])  # Find the index of the top MIPS based on the inner product order of r_i
-    top1_MIPS.append(DATA[top1_index])
+    # Find the index of the top MIPS based on the inner product order of r_i
+    # top1_index = np.argmax(L[:, closest_index])
+    topk_indices = np.argpartition(L[:, closest_index], -k)[-k:]
 
-for i in range(Q):
-    print(f"For query {QUERY[i]}, the nearest vector in the dataset is {top1_MIPS[i]}")
+    # Sort topk_indices, make sure the first index is always the largest one, and so on
+    topk_indices = topk_indices[np.argsort(-L[topk_indices, closest_index])]
+    topk_MIPS.append(topk_indices)
+
+print(topk_MIPS)
